@@ -1,5 +1,6 @@
 package br.tec.db.votacao.service;
 
+import br.tec.db.votacao.cache.PautaCacheService;
 import br.tec.db.votacao.dto.Pauta.AbrirVotacaoDTO;
 import br.tec.db.votacao.dto.Pauta.CriarPautaDTO;
 import br.tec.db.votacao.dto.Pauta.ListarPautaDTO;
@@ -23,10 +24,12 @@ import java.util.UUID;
 public class PautaService {
     private final PautaRepository pautaRepository;
     private final VotoRepository votoRepository;
+    private final PautaCacheService pautaCacheService;
 
-    public PautaService(PautaRepository pautaRepository, VotoRepository votoRepository) {
+    public PautaService(PautaRepository pautaRepository, VotoRepository votoRepository, PautaCacheService pautaCacheService) {
         this.pautaRepository = pautaRepository;
         this.votoRepository = votoRepository;
+        this.pautaCacheService = pautaCacheService;
     }
 
     @Transactional
@@ -72,7 +75,11 @@ public class PautaService {
         pauta.setInicioVotacao(inicioVotacao);
         pauta.setFimVotacao(inicioVotacao.plusMinutes(duracaoMinutos));
 
-        return PautaMapper.toDto(pautaRepository.save(pauta));
+        Pauta pautaSalva = pautaRepository.save(pauta);
+
+        pautaCacheService.salvar(pauta);
+
+        return PautaMapper.toDto(pautaSalva);
     }
 
     @Transactional(readOnly = true)

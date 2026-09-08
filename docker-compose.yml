@@ -28,5 +28,28 @@ services:
       DATABASE_USER: postgres
       DATABASE_PASSWORD: postgres
 
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    restart: unless-stopped
+    depends_on:
+      - redis
+    ports:
+      - "5540:5540"
+    volumes:
+      - redisinsight_data:/data
+
 volumes:
   postgres_data:
+  redis_data:
+  redisinsight_data:

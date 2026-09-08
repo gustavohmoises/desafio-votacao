@@ -1,5 +1,7 @@
 package br.tec.db.votacao.service;
 
+import br.tec.db.votacao.cache.PautaCache;
+import br.tec.db.votacao.cache.PautaCacheService;
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
 import br.tec.db.votacao.dto.Voto.ListarVotoDTO;
 import br.tec.db.votacao.entity.Associado;
@@ -22,11 +24,13 @@ public class VotoService {
     private final VotoRepository votoRepository;
     private final PautaRepository pautaRepository;
     private final AssociadoRepository associadoRepository;
+    private final PautaCacheService pautaCacheService;
 
-    public VotoService(VotoRepository votoRepository, PautaRepository pautaRepository, AssociadoRepository associadoRepository) {
+    public VotoService(VotoRepository votoRepository, PautaRepository pautaRepository, AssociadoRepository associadoRepository, PautaCacheService pautaCacheService) {
         this.votoRepository = votoRepository;
         this.pautaRepository = pautaRepository;
         this.associadoRepository = associadoRepository;
+        this.pautaCacheService = pautaCacheService;
     }
 
     @Transactional(readOnly = true)
@@ -36,22 +40,34 @@ public class VotoService {
 
     @Transactional
     public ListarVotoDTO votar(CriarVotoDTO dto) {
-        Pauta pauta = pautaRepository.findById(dto.pautaId())
-                .orElseThrow(() -> new NotFoundException("Pauta não encontrada."));
+        PautaCache pautaCache = pautaCacheService.buscar(dto.pautaId())
+                .orElseThrow(() -> new NotFoundException("Pauta não encontrada ou não aberta para votação."));
 
-        if (!pauta.votacaoAberta()) {
+        if (!pautaCache.votacaoAberta()) {
             throw new ConflictException("A votação desta pauta não está aberta.");
         }
 
-        Associado associado = associadoRepository.findById(dto.associadoId())
-                .orElseThrow(() -> new NotFoundException("Associado não encontrado."));
+        Pauta pauta = pautaRepository.getReferenceById(dto.pautaId());
+        Associado associado = associadoRepository.getReferenceById(dto.associadoId());
 
         Voto voto = VotoMapper.toEntity(dto, pauta, associado);
 
         try {
-            return VotoMapper.toDto(votoRepository.save(voto));
+            Voto votoSalvo = votoRepository.saveAndFlush(voto);
+
+            return VotoMapper.toDto(votoSalvo);
         } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("O associado já votou nesta pauta.");
+            String mensagem = e.getMostSpecificCause().getMessage();
+
+            if (mensagem.contains("uk_voto_associado_pauta")) {
+                throw new ConflictException("O associado já votou nesta pauta.");
+            }
+
+            if (mensagem.contains("fk_voto_associado")) {
+                throw new NotFoundException("Associado não encontrado.");
+            }
+
+            throw new DataIntegrityViolationException("Falha ao salvar voto.");
         }
     }
 }
