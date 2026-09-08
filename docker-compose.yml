@@ -15,19 +15,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  app:
-    container_name: votacao-api
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9093
-      DATABASE_URL: jdbc:postgresql://postgres:5432/votacao
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: postgres
-
   redis:
     image: redis:alpine
     container_name: redis
@@ -48,6 +35,20 @@ services:
       - "5540:5540"
     volumes:
       - redisinsight_data:/data
+
+  app:
+    container_name: votacao-api
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/votacao
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      REDIS_HOST: redis
 
 volumes:
   postgres_data:
