@@ -26,7 +26,7 @@ public class AssociadoService {
     public ListarAssociadoDTO create(CriarAssociadoDTO dto) {
         try {
             Associado associado = AssociadoMapper.toEntity(dto);
-            return AssociadoMapper.toDto(associadoRepository.save(associado));
+            return AssociadoMapper.toDto(associadoRepository.saveAndFlush(associado));
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException("Já existe um associado com este CPF.");
         }

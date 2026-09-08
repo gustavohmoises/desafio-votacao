@@ -6,12 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 
 import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleNotFound(NotFoundException ex) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -24,17 +26,48 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponseDTO> handleConflict(ConflictException ex) {
-        return this.buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        return this.buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    /**
+     * Trata erros de validação do @Valid
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDTO> handleValidation(MethodArgumentNotValidException ex) {
+
+        String mensagem = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Dados inválidos.");
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, mensagem);
+    }
+
+    /**
+     * Trata erros de conversão/desserialização do JSON.
+     * Exemplo: "voto": "SIMM"
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDTO> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Dados da requisição inválidos.");
+    }
+
+    /**
+     * Tratamento genérico para exceções não previstas.
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleException(Exception ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno no servidor.");
+    }
 
     private ResponseEntity<ErrorResponseDTO> buildErrorResponse(HttpStatus status, String mensagem) {
-
         ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(
                 status.value(),
                 mensagem,
@@ -43,5 +76,4 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(status).body(errorResponseDTO);
     }
-
 }
