@@ -5,6 +5,7 @@ import br.tec.db.votacao.dto.Pauta.CriarPautaDTO;
 import br.tec.db.votacao.dto.Pauta.ListarPautaDTO;
 import br.tec.db.votacao.dto.Pauta.ResultadoVotacaoDTO;
 import br.tec.db.votacao.service.PautaService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/pautas")
+@SecurityRequirement(name = "bearerAuth")
 public class PautaController {
     private final PautaService pautaService;
 

@@ -10,7 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
         ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(
                 status.value(),
                 mensagem,
-                OffsetDateTime.now()
+                LocalDateTime.now()
         );
 
         return ResponseEntity.status(status).body(errorResponseDTO);

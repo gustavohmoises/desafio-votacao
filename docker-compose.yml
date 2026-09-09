@@ -78,6 +78,7 @@ services:
       DATABASE_PASSWORD: postgres
       KAFKA_BOOTSTRAP_SERVERS: kafka:9093
       REDIS_HOST: redis
+      JWT_SECRET: S3cre7key
 
 volumes:
   postgres_data:

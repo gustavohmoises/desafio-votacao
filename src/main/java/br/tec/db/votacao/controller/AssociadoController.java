@@ -3,6 +3,7 @@ package br.tec.db.votacao.controller;
 import br.tec.db.votacao.dto.Associado.CriarAssociadoDTO;
 import br.tec.db.votacao.dto.Associado.ListarAssociadoDTO;
 import br.tec.db.votacao.service.AssociadoService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/associados")
+@SecurityRequirement(name = "bearerAuth")
 public class AssociadoController {
     private final AssociadoService associadoService;
 
