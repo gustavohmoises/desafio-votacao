@@ -2,6 +2,9 @@ package br.tec.db.votacao.controller;
 
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
 import br.tec.db.votacao.dto.Voto.ListarVotoDTO;
+import br.tec.db.votacao.dto.Voto.ListarVotoInvalidoDTO;
+import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
+import br.tec.db.votacao.entity.VotoInvalido;
 import br.tec.db.votacao.service.VotoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,8 +27,13 @@ public class VotoController {
         return ResponseEntity.ok(votoService.getAll());
     }
 
+    @GetMapping("/invalidos")
+    public ResponseEntity<List<ListarVotoInvalidoDTO>> getAllInvalidos() {
+        return ResponseEntity.ok(votoService.getAllInvalidos());
+    }
+
     @PostMapping
-    public ResponseEntity<ListarVotoDTO> create(@RequestBody @Valid CriarVotoDTO dto) {
+    public ResponseEntity<VotoEventoDTO> create(@RequestBody @Valid CriarVotoDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body((votoService.votar(dto)));
     }
 }

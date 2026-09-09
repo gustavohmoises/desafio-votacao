@@ -8,9 +8,4 @@ public record PautaCache(
         LocalDateTime inicioVotacao,
         LocalDateTime fimVotacao
 ) {
-    public boolean votacaoAberta() {
-        LocalDateTime agora = LocalDateTime.now();
-
-        return !agora.isBefore(inicioVotacao) && agora.isBefore(fimVotacao);
-    }
 }

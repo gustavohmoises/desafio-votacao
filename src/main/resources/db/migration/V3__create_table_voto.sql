@@ -3,6 +3,7 @@ CREATE TABLE voto (
     pauta_id UUID NOT NULL,
     associado_id UUID NOT NULL,
     voto VARCHAR(3) NOT NULL,
+    data_envio TIMESTAMP NOT NULL,
     data_cadastro TIMESTAMP NOT NULL,
 
     CONSTRAINT fk_voto_pauta

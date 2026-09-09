@@ -31,6 +31,10 @@ public class PautaCacheService {
                 pauta.getFimVotacao()
         );
 
+        if (ttl.isZero() || ttl.isNegative()) {
+            return;
+        }
+
         redisTemplate.opsForValue()
                 .set(PREFIXO + pauta.getId(), cache, ttl);
     }

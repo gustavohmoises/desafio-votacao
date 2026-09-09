@@ -8,24 +8,22 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "voto")
+@Table(name = "voto_invalido")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @Builder
-public class Voto {
+public class VotoInvalido {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne()
-    @JoinColumn(name = "pauta_id", nullable = false)
-    private Pauta pauta;
+    @Column(name = "pauta_id")
+    private UUID pautaId;
 
-    @ManyToOne()
-    @JoinColumn(name = "associado_id", nullable = false)
-    private Associado associado;
+    @Column(name = "associado_id")
+    private UUID associadoId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 3)
@@ -36,6 +34,9 @@ public class Voto {
 
     @Column(name = "data_cadastro", nullable = false)
     private LocalDateTime dataCadastro;
+
+    @Column(nullable = false, length = 255)
+    private String mensagem;
 
     @PrePersist
     public void prePersist() {
