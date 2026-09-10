@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface AdminRepository extends JpaRepository<Admin, UUID> {
     Optional<Admin> findByLogin(String login);
+    boolean existsByLogin(String login);
 }
 

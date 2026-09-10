@@ -27,7 +27,7 @@ public class AdminService {
     private final TokenService tokenService;
 
     public ListarAdminDTO registrar(RegistrarDTO dto) {
-        if (adminRepository.findByLogin(dto.login()) != null) {
+        if (adminRepository.existsByLogin(dto.login())) {
             throw new ConflictException("Já existe um administrador com este login.");
         }
 

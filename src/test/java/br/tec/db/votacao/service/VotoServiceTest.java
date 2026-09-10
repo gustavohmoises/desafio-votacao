@@ -3,19 +3,24 @@ package br.tec.db.votacao.service;
 import br.tec.db.votacao.cache.PautaCache;
 import br.tec.db.votacao.cache.PautaCacheService;
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
-import br.tec.db.votacao.dto.Voto.ListarVotoDTO;
+import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import br.tec.db.votacao.entity.Associado;
 import br.tec.db.votacao.entity.Pauta;
 import br.tec.db.votacao.entity.Voto;
+import br.tec.db.votacao.entity.VotoInvalido;
 import br.tec.db.votacao.enums.TipoVotoEnum;
+import br.tec.db.votacao.producer.VotoProducer;
 import br.tec.db.votacao.repository.AssociadoRepository;
 import br.tec.db.votacao.repository.PautaRepository;
+import br.tec.db.votacao.repository.VotoInvalidoRepository;
 import br.tec.db.votacao.repository.VotoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -24,6 +29,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class VotoServiceTest {
@@ -43,8 +49,14 @@ class VotoServiceTest {
     @InjectMocks
     private VotoService votoService;
 
+    @Mock
+    private VotoProducer votoProducer;
+
+    @Mock
+    private VotoInvalidoRepository votoInvalidoRepository;
+
     @Test
-    void deveRealizarVotoComSucesso() {
+    void deveCadastrarVotoParaProcessar() {
         UUID pautaId = UUID.randomUUID();
         UUID associadoId = UUID.randomUUID();
 
@@ -54,35 +66,53 @@ class VotoServiceTest {
                 TipoVotoEnum.SIM
         );
 
-        LocalDateTime inicioVotacao = LocalDateTime.now().minusMinutes(1);
-        LocalDateTime fimVotacao = LocalDateTime.now().plusMinutes(10);
+        doNothing().when(votoProducer).publicar(any(VotoEventoDTO.class));
+
+        VotoEventoDTO resultado = votoService.votar(dto);
+
+        assertNotNull(resultado);
+        assertEquals(pautaId, resultado.pautaId());
+        assertEquals(associadoId, resultado.associadoId());
+        assertEquals(TipoVotoEnum.SIM, resultado.voto());
+        assertNotNull(resultado.dataEnvio());
+        assertEquals("Voto em processamento.", resultado.mensagem());
+
+        verify(votoProducer).publicar(any(VotoEventoDTO.class));
+
+        verifyNoInteractions(
+                pautaCacheService,
+                pautaRepository,
+                associadoRepository,
+                votoRepository
+        );
+    }
+
+    @Test
+    void deveSalvarVotoValido() {
+        UUID pautaId = UUID.randomUUID();
+        UUID associadoId = UUID.randomUUID();
+
+        LocalDateTime inicio = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime fim = LocalDateTime.now().plusMinutes(10);
+        LocalDateTime dataEnvio = LocalDateTime.now();
+
+        VotoEventoDTO dto = new VotoEventoDTO(
+                pautaId,
+                associadoId,
+                TipoVotoEnum.SIM,
+                dataEnvio,
+                "Voto em processamento."
+        );
 
         PautaCache pautaCache = new PautaCache(
                 pautaId,
-                inicioVotacao,
-                fimVotacao
+                inicio,
+                fim
         );
 
-        Pauta pauta = Pauta.builder()
-                .id(pautaId)
-                .titulo("Pauta teste")
-                .descricao("Descrição da pauta")
-                .inicioVotacao(inicioVotacao)
-                .fimVotacao(fimVotacao)
-                .build();
-
-        Associado associado = Associado.builder()
-                .id(associadoId)
-                .nome("João")
-                .cpf("12345678901")
-                .build();
-
-        Voto votoSalvo = Voto.builder()
-                .id(UUID.randomUUID())
-                .pauta(pauta)
-                .associado(associado)
-                .voto(TipoVotoEnum.SIM)
-                .build();
+        Pauta pauta = new Pauta();
+        Associado associado = new Associado();
+        Voto voto = new Voto();
 
         when(pautaCacheService.buscar(pautaId))
                 .thenReturn(Optional.of(pautaCache));
@@ -93,24 +123,71 @@ class VotoServiceTest {
         when(associadoRepository.getReferenceById(associadoId))
                 .thenReturn(associado);
 
-        when(votoRepository.saveAndFlush(any(Voto.class)))
-                .thenReturn(votoSalvo);
-
-        ListarVotoDTO resultado = votoService.votar(dto);
-
-        assertNotNull(resultado);
-        assertEquals(votoSalvo.getId(), resultado.id());
-        assertEquals(pautaId, resultado.pautaId());
-        assertEquals(associadoId, resultado.associadoId());
-        assertEquals(TipoVotoEnum.SIM, resultado.voto());
+        votoService.processarVoto(dto);
 
         verify(pautaCacheService).buscar(pautaId);
         verify(pautaRepository).getReferenceById(pautaId);
         verify(associadoRepository).getReferenceById(associadoId);
-        verify(votoRepository).saveAndFlush(any(Voto.class));
+        verify(votoRepository).save(any(Voto.class));
 
         verify(pautaRepository, never()).findById(any());
-        verify(associadoRepository, never()).findById(any());
-        verify(votoRepository, never()).save(any());
+        verify(votoInvalidoRepository, never()).save(any(VotoInvalido.class));
+    }
+
+    @Test
+    void deveSalvarVotoInvalidoQuandoAssociadoJaVotou() {
+        UUID pautaId = UUID.randomUUID();
+        UUID associadoId = UUID.randomUUID();
+
+        LocalDateTime inicio = LocalDateTime.now().minusMinutes(10);
+        LocalDateTime fim = LocalDateTime.now().plusMinutes(10);
+
+        VotoEventoDTO dto = new VotoEventoDTO(
+                pautaId,
+                associadoId,
+                TipoVotoEnum.SIM,
+                LocalDateTime.now(),
+                "Voto em processamento."
+        );
+
+        PautaCache pautaCache = new PautaCache(
+                pautaId,
+                inicio,
+                fim
+        );
+
+        Pauta pauta = new Pauta();
+        Associado associado = new Associado();
+
+        when(pautaCacheService.buscar(pautaId))
+                .thenReturn(Optional.of(pautaCache));
+
+        when(pautaRepository.getReferenceById(pautaId))
+                .thenReturn(pauta);
+
+        when(associadoRepository.getReferenceById(associadoId))
+                .thenReturn(associado);
+
+        DataIntegrityViolationException exception =
+                new DataIntegrityViolationException(
+                        "duplicate key",
+                        new RuntimeException("violates constraint uk_voto_associado_pauta")
+                );
+
+        doThrow(exception)
+                .when(votoRepository)
+                .save(any(Voto.class));
+
+        votoService.processarVoto(dto);
+
+        ArgumentCaptor<VotoInvalido> captor = ArgumentCaptor.forClass(VotoInvalido.class);
+
+        verify(votoInvalidoRepository).save(captor.capture());
+
+        assertThat(captor.getValue()).isNotNull();
+
+        verify(votoRepository).save(any(Voto.class));
+
+        assertThat(captor.getValue().getMensagem()).isEqualTo("O associado já votou nesta pauta.");
     }
 }
