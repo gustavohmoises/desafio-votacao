@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.time.LocalDateTime;
 
@@ -32,6 +33,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBadCredentials(BadCredentialsException ex) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     /**
@@ -62,10 +68,10 @@ public class GlobalExceptionHandler {
     /**
      * Tratamento genérico para exceções não previstas.
      */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDTO> handleException(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno no servidor.");
-    }
+   @ExceptionHandler(Exception.class)
+   public ResponseEntity<ErrorResponseDTO> handleException(Exception ex) {
+       return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno no servidor.");
+   }
 
     private ResponseEntity<ErrorResponseDTO> buildErrorResponse(HttpStatus status, String mensagem) {
         ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(
