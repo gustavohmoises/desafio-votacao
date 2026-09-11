@@ -68,10 +68,10 @@ public class GlobalExceptionHandler {
     /**
      * Tratamento genérico para exceções não previstas.
      */
-   @ExceptionHandler(Exception.class)
-   public ResponseEntity<ErrorResponseDTO> handleException(Exception ex) {
-       return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno no servidor.");
-   }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponseDTO> handleException(Exception ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ocorreu um erro interno no servidor.");
+    }
 
     private ResponseEntity<ErrorResponseDTO> buildErrorResponse(HttpStatus status, String mensagem) {
         ErrorResponseDTO errorResponseDTO = new ErrorResponseDTO(

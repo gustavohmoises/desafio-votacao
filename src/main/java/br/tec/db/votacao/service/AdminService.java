@@ -8,7 +8,6 @@ import br.tec.db.votacao.dto.Admin.TokenDTO;
 import br.tec.db.votacao.entity.Admin;
 import br.tec.db.votacao.exception.ConflictException;
 import br.tec.db.votacao.mapper.AdminMapper;
-import br.tec.db.votacao.mapper.AssociadoMapper;
 import br.tec.db.votacao.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

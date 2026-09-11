@@ -26,9 +26,13 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException ex
     ) throws IOException {
-        String mensagem = ex instanceof BadCredentialsException
-                ? "Credenciais inválidas."
-                : "Token de acesso não informado.";
+        String mensagem;
+
+        if (ex instanceof BadCredentialsException) {
+            mensagem = ex.getMessage();
+        } else {
+            mensagem = "Token de acesso não informado.";
+        }
 
         ErrorResponseDTO error = new ErrorResponseDTO(
                 HttpStatus.UNAUTHORIZED.value(),

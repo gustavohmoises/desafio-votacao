@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -18,22 +19,26 @@ import java.io.IOException;
 public class SecurityFilter extends OncePerRequestFilter {
     private final TokenService tokenService;
     private final AdminRepository adminRepository;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = recuperarToken(request);
 
         if (token != null) {
             String login = tokenService.validateToken(token);
 
-            if (login != null) {
-                adminRepository.findByLogin(login)
-                        .ifPresent(admin -> {
-                            var authentication = new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities());
-
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
-                        });
+            if (login == null) {
+                authenticationEntryPoint.commence(request, response, new BadCredentialsException("Token de acesso inválido."));
+                return;
             }
+
+            adminRepository.findByLogin(login)
+                    .ifPresent(admin -> {
+                        var authentication = new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities());
+
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    });
         }
 
         filterChain.doFilter(request, response);
