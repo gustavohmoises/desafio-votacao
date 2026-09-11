@@ -1,13 +1,13 @@
-package br.tec.db.votacao.producer;
+package br.tec.db.votacao.messaging.consumer;
 
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import br.tec.db.votacao.enums.TipoVotoEnum;
+import br.tec.db.votacao.service.VotoService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,15 +15,15 @@ import java.util.UUID;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class VotoProducerTest {
+class VotoConsumerTest {
     @Mock
-    private KafkaTemplate<String, VotoEventoDTO> kafkaTemplate;
+    private VotoService votoService;
 
     @InjectMocks
-    private VotoProducer votoProducer;
+    private VotoConsumer votoConsumer;
 
     @Test
-    void devePublicarVotoNoTopicoCorreto() {
+    void deveProcessarVotoRecebido() {
         UUID pautaId = UUID.randomUUID();
         UUID associadoId = UUID.randomUUID();
 
@@ -35,8 +35,8 @@ class VotoProducerTest {
                 "Voto em processamento."
         );
 
-        votoProducer.publicar(dto);
+        votoConsumer.consumir(dto);
 
-        verify(kafkaTemplate).send("votos-processar", dto);
+        verify(votoService).processarVoto(dto);
     }
 }

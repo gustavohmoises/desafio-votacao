@@ -1,6 +1,6 @@
 package br.tec.db.votacao.controller;
 
-import br.tec.db.votacao.cache.PautaCacheService;
+import br.tec.db.votacao.service.PautaCacheService;
 import br.tec.db.votacao.dto.Admin.LogarDTO;
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
@@ -8,7 +8,7 @@ import br.tec.db.votacao.entity.Admin;
 import br.tec.db.votacao.entity.Associado;
 import br.tec.db.votacao.entity.Pauta;
 import br.tec.db.votacao.enums.TipoVotoEnum;
-import br.tec.db.votacao.producer.VotoProducer;
+import br.tec.db.votacao.messaging.producer.VotoProducer;
 import br.tec.db.votacao.repository.AdminRepository;
 import br.tec.db.votacao.repository.AssociadoRepository;
 import br.tec.db.votacao.repository.PautaRepository;

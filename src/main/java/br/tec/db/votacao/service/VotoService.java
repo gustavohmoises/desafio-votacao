@@ -1,7 +1,6 @@
 package br.tec.db.votacao.service;
 
-import br.tec.db.votacao.cache.PautaCache;
-import br.tec.db.votacao.cache.PautaCacheService;
+import br.tec.db.votacao.dto.Pauta.PautaCacheDTO;
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
 import br.tec.db.votacao.dto.Voto.ListarVotoDTO;
 import br.tec.db.votacao.dto.Voto.ListarVotoInvalidoDTO;
@@ -13,7 +12,7 @@ import br.tec.db.votacao.entity.VotoInvalido;
 import br.tec.db.votacao.exception.ConflictException;
 import br.tec.db.votacao.exception.NotFoundException;
 import br.tec.db.votacao.mapper.VotoMapper;
-import br.tec.db.votacao.producer.VotoProducer;
+import br.tec.db.votacao.messaging.producer.VotoProducer;
 import br.tec.db.votacao.repository.AssociadoRepository;
 import br.tec.db.votacao.repository.PautaRepository;
 import br.tec.db.votacao.repository.VotoInvalidoRepository;
@@ -76,12 +75,12 @@ public class VotoService {
 
     public void processarVoto(VotoEventoDTO dto) {
         try {
-            PautaCache pautaCache = pautaCacheService.buscar(dto.pautaId())
+            PautaCacheDTO pautaCacheDTO = pautaCacheService.buscar(dto.pautaId())
                     .orElseGet(() -> {
                         Pauta pauta = pautaRepository.findById(dto.pautaId())
                                 .orElseThrow(() -> new NotFoundException("Pauta não encontrada."));
 
-                        return new PautaCache(
+                        return new PautaCacheDTO(
                                 pauta.getId(),
                                 pauta.getInicioVotacao(),
                                 pauta.getFimVotacao()
@@ -89,8 +88,8 @@ public class VotoService {
                     });
 
             LocalDateTime dataEnvio = dto.dataEnvio();
-            LocalDateTime inicioVotacao = pautaCache.inicioVotacao();
-            LocalDateTime fimVotacao = pautaCache.fimVotacao();
+            LocalDateTime inicioVotacao = pautaCacheDTO.inicioVotacao();
+            LocalDateTime fimVotacao = pautaCacheDTO.fimVotacao();
 
             if (dataEnvio == null
                     || inicioVotacao == null

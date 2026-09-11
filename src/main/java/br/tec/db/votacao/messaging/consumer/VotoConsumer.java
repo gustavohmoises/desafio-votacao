@@ -1,4 +1,4 @@
-package br.tec.db.votacao.consumer;
+package br.tec.db.votacao.messaging.consumer;
 
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import br.tec.db.votacao.service.VotoService;

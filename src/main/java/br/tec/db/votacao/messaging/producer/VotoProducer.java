@@ -1,4 +1,4 @@
-package br.tec.db.votacao.producer;
+package br.tec.db.votacao.messaging.producer;
 
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import lombok.RequiredArgsConstructor;

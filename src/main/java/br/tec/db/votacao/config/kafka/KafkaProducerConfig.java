@@ -1,4 +1,4 @@
-package br.tec.db.votacao.config;
+package br.tec.db.votacao.config.kafka;
 
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import org.apache.kafka.clients.producer.ProducerConfig;

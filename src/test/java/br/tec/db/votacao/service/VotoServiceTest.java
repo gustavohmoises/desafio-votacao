@@ -1,7 +1,6 @@
 package br.tec.db.votacao.service;
 
-import br.tec.db.votacao.cache.PautaCache;
-import br.tec.db.votacao.cache.PautaCacheService;
+import br.tec.db.votacao.dto.Pauta.PautaCacheDTO;
 import br.tec.db.votacao.dto.Voto.CriarVotoDTO;
 import br.tec.db.votacao.dto.Voto.VotoEventoDTO;
 import br.tec.db.votacao.entity.Associado;
@@ -9,7 +8,7 @@ import br.tec.db.votacao.entity.Pauta;
 import br.tec.db.votacao.entity.Voto;
 import br.tec.db.votacao.entity.VotoInvalido;
 import br.tec.db.votacao.enums.TipoVotoEnum;
-import br.tec.db.votacao.producer.VotoProducer;
+import br.tec.db.votacao.messaging.producer.VotoProducer;
 import br.tec.db.votacao.repository.AssociadoRepository;
 import br.tec.db.votacao.repository.PautaRepository;
 import br.tec.db.votacao.repository.VotoInvalidoRepository;
@@ -104,7 +103,7 @@ class VotoServiceTest {
                 "Voto em processamento."
         );
 
-        PautaCache pautaCache = new PautaCache(
+        PautaCacheDTO pautaCacheDTO = new PautaCacheDTO(
                 pautaId,
                 inicio,
                 fim
@@ -115,7 +114,7 @@ class VotoServiceTest {
         Voto voto = new Voto();
 
         when(pautaCacheService.buscar(pautaId))
-                .thenReturn(Optional.of(pautaCache));
+                .thenReturn(Optional.of(pautaCacheDTO));
 
         when(pautaRepository.getReferenceById(pautaId))
                 .thenReturn(pauta);
@@ -150,7 +149,7 @@ class VotoServiceTest {
                 "Voto em processamento."
         );
 
-        PautaCache pautaCache = new PautaCache(
+        PautaCacheDTO pautaCacheDTO = new PautaCacheDTO(
                 pautaId,
                 inicio,
                 fim
@@ -160,7 +159,7 @@ class VotoServiceTest {
         Associado associado = new Associado();
 
         when(pautaCacheService.buscar(pautaId))
-                .thenReturn(Optional.of(pautaCache));
+                .thenReturn(Optional.of(pautaCacheDTO));
 
         when(pautaRepository.getReferenceById(pautaId))
                 .thenReturn(pauta);

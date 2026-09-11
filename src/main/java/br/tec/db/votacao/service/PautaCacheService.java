@@ -1,5 +1,6 @@
-package br.tec.db.votacao.cache;
+package br.tec.db.votacao.service;
 
+import br.tec.db.votacao.dto.Pauta.PautaCacheDTO;
 import br.tec.db.votacao.entity.Pauta;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class PautaCacheService {
     private static final String PREFIXO = "pauta:";
 
     public void salvar(Pauta pauta) {
-        PautaCache cache = new PautaCache(
+        PautaCacheDTO cache = new PautaCacheDTO(
                 pauta.getId(),
                 pauta.getInicioVotacao(),
                 pauta.getFimVotacao()
@@ -39,10 +40,10 @@ public class PautaCacheService {
                 .set(PREFIXO + pauta.getId(), cache, ttl);
     }
 
-    public Optional<PautaCache> buscar(UUID pautaId) {
+    public Optional<PautaCacheDTO> buscar(UUID pautaId) {
         Object valor = redisTemplate.opsForValue().get(PREFIXO + pautaId);
 
         return Optional.ofNullable(valor)
-                .map(v -> objectMapper.convertValue(v, PautaCache.class));
+                .map(v -> objectMapper.convertValue(v, PautaCacheDTO.class));
     }
 }

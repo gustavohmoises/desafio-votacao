@@ -1,6 +1,5 @@
 package br.tec.db.votacao.service;
 
-import br.tec.db.votacao.cache.PautaCacheService;
 import br.tec.db.votacao.dto.Pauta.AbrirVotacaoDTO;
 import br.tec.db.votacao.dto.Pauta.CriarPautaDTO;
 import br.tec.db.votacao.dto.Pauta.ListarPautaDTO;
